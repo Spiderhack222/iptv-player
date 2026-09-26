@@ -28,13 +28,15 @@ class ChannelAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_channel, parent, false)
+        view.isFocusable = true
+        view.isFocusableInTouchMode = true
         return ChannelViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         val channel = channels[position]
         holder.name.text = channel.name
-        holder.group.text = channel.groupTitle ?: "Sin categoría"
+        holder.group.text = channel.groupTitle ?: holder.itemView.context.getString(R.string.uncategorized)
 
         Glide.with(holder.logo.context)
             .load(channel.logoUrl)

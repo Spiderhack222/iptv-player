@@ -3,6 +3,7 @@ package com.example.iptvplayer
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -14,12 +15,14 @@ import com.bumptech.glide.Glide
 import com.example.iptvplayer.data.PlaylistRepository
 import com.example.iptvplayer.databinding.ActivityPlayerBinding
 import com.example.iptvplayer.model.Channel
+import com.example.iptvplayer.model.ContentModule
 
 class PlayerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPlayerBinding
     private var player: ExoPlayer? = null
     private lateinit var channel: Channel
+    private lateinit var module: ContentModule
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,19 +41,35 @@ class PlayerActivity : AppCompatActivity() {
             finish()
             return
         }
-        channel = extraChannel
 
-        bindChannelInfo()
+        module = ContentModule.fromId(intent.getStringExtra(EXTRA_MODULE_ID))
+        channel = extraChannel
 
         binding.btnNext.setOnClickListener { switchChannel(1) }
         binding.btnPrev.setOnClickListener { switchChannel(-1) }
         binding.btnBack.setOnClickListener { finish() }
 
+        bindChannelInfo()
         preparePlayer()
     }
 
+    private fun currentModuleList(): List<Channel> {
+        val list = PlaylistRepository.channels.filter { ContentModule.inferFrom(it) == module }
+        return if (list.isEmpty()) PlaylistRepository.channels else list
+    }
+
     private fun bindChannelInfo() {
+        val list = currentModuleList()
+        val currentIndex = list.indexOfFirst { it.streamUrl == channel.streamUrl }
+
         binding.txtChannelName.text = channel.name
+        binding.txtChannelMeta.text = channel.groupTitle ?: getString(R.string.uncategorized)
+        binding.txtChannelIndex.text = getString(
+            R.string.channel_position,
+            (if (currentIndex == -1) 1 else currentIndex + 1),
+            list.size
+        )
+
         Glide.with(this)
             .load(channel.logoUrl)
             .placeholder(R.drawable.ic_tv_placeholder)
@@ -59,7 +78,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun switchChannel(direction: Int) {
-        val list = PlaylistRepository.channels
+        val list = currentModuleList()
         if (list.isEmpty()) return
         val currentIndex = list.indexOfFirst { it.streamUrl == channel.streamUrl }
         if (currentIndex == -1) return
@@ -91,11 +110,27 @@ class PlayerActivity : AppCompatActivity() {
             override fun onPlayerError(error: PlaybackException) {
                 binding.progressBar.visibility = View.GONE
                 binding.txtError.visibility = View.VISIBLE
-                binding.txtError.text = "No se pudo reproducir el canal (${error.errorCodeName})"
+                binding.txtError.text = getString(R.string.player_error, error.errorCodeName)
             }
         })
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                switchChannel(1)
+                true
+            }
+
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                switchChannel(-1)
+                true
+            }
+
+            else -> super.onKeyDown(keyCode, event)
+        }
     }
 
     override fun onStop() {
@@ -111,5 +146,6 @@ class PlayerActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_CHANNEL = "extra_channel"
+        const val EXTRA_MODULE_ID = "extra_module_id"
     }
 }

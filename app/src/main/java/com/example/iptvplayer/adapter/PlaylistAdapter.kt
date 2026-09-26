@@ -24,6 +24,8 @@ class PlaylistAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_playlist, parent, false)
+        view.isFocusable = true
+        view.isFocusableInTouchMode = true
         return PlaylistViewHolder(view)
     }
 
