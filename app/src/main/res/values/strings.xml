@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IPTV Player</string>
+    <string name="hint_url">https://ejemplo.com/lista.m3u</string>
+    <string name="load_url">Cargar desde URL</string>
+    <string name="load_file">Abrir archivo M3U</string>
+    <string name="saved_playlists">Listas guardadas</string>
+    <string name="search_hint">Buscar canal…</string>
+    <string name="favorites">Favoritos</string>
+    <string name="no_channels">No hay canales para mostrar</string>
+</resources>
